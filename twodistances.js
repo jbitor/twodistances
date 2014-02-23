@@ -5,6 +5,11 @@ require: document.createElement('canvas').getContext .exists;
 window.TwoDistances = TwoDistances;
 TwoDistances.Node = Node;
 
+function Coordinates(x, y) {
+    this.x = x;
+    this.y = y;
+}
+
 function Node(distanceA, distanceB, source, color) {
     if (!(distanceA >=0 && distanceA <= 1)) {
         throw new Error("distanceA=" + distanceA, distanceA);
@@ -31,11 +36,11 @@ function Node(distanceA, distanceB, source, color) {
 
 Node.prototype.coordinates = function(twoDistances) {
     if (typeof this._coordinates === 'undefined') {
-        this._coordinates = {
+        this._coordinates = new Coordinates(
             // TODO: everything interesting
-            x: twoDistances.width * Math.random(),
-            y: twoDistances.height * Math.random()
-        }
+            Math.random(),
+            Math.random() / 2
+        );
     }
 
     return this._coordinates;
@@ -43,29 +48,38 @@ Node.prototype.coordinates = function(twoDistances) {
 
 // All distances must be between 0.0 and 1.0.
 function TwoDistances(originDistances, nodes) {
-    this.nodes = [
-        new Node(0.0, originDistances, null, 'rgba(255, 0, 0, 0.75)'),
-        new Node(originDistances, 0.0, null, 'rgba(0, 0, 255, 0.75)')
-    ];
+    if (!(originDistances >= 0.0 && originDistances < 1.0)) {
+        throw new Error("originDistances=" + originDistances);
+    }
+
+    this.originDistances = originDistances;
+
+    this.originA = new Node(0.0, originDistances, null, 'rgba(255, 0, 0, 0.75)');
+    this.originA._coordinates = new Coordinates(1.0 - originDistances, 0);
+
+    this.originB = new Node(originDistances, 0.0, null, 'rgba(0, 0, 255, 0.75)')
+    this.originB._coordinates = new Coordinates(1.0, 0);
+
+    this.nodes = [this.originA, this.originB];
 
     for (var i = 0; i < nodes.length; i++) {
         this.nodes.push(nodes[i]);
     }
 
-    this.width = this.scale * (2.0 - originDistances);
-    this.height = this.scale * (Math.pow(1 - Math.pow(originDistances / 2, 2), 1/2));
+    this.width = (2.0 - originDistances);
+    this.height = (Math.pow(1 - Math.pow(originDistances / 2, 2), 1/2));
 
     this.canvas = document.createElement('canvas');
-    this.canvas.width = this.width + this.padding * 2.0;
-    this.canvas.height = this.height + this.padding * 2.0;
+    this.canvas.width = this.scale * (this.width + 2.0 * this.padding);
+    this.canvas.height = this.scale * (this.height + 2.0 * this.padding);
 
     this.graphics = this.canvas.getContext('2d');
 
     this.draw();
 }
 
-TwoDistances.prototype.scale = 512;
-TwoDistances.prototype.padding = TwoDistances.prototype.scale / 64;
+TwoDistances.prototype.scale = 256;
+TwoDistances.prototype.padding = 1/64;
 
 TwoDistances.prototype.draw = function() {
     this.graphics.clearRect(0, 0, this.width, this.height);
@@ -83,19 +97,19 @@ TwoDistances.prototype.draw = function() {
 
             this.graphics.beginPath();
             this.graphics.moveTo(
-                this.padding + coordinates.x,
-                this.padding + coordinates.y);
+                this.scale * (this.padding + coordinates.x),
+                this.scale * (this.padding + this.height - coordinates.y));
             this.graphics.lineTo(
-                this.padding + sourceCoordinates.x,
-                this.padding + sourceCoordinates.y);
+                this.scale * (this.padding + sourceCoordinates.x),
+                this.scale * (this.padding + this.height - sourceCoordinates.y));
             this.graphics.stroke();
             this.graphics.closePath();
         }
 
         this.graphics.beginPath();
         this.graphics.arc(
-            this.padding + coordinates.x,
-            this.padding + coordinates.y,
+            this.scale * (this.padding + coordinates.x),
+            this.scale * (this.padding + this.height - coordinates.y),
             this.scale / 64,
             0.0,
             2.0 * Math.PI,
