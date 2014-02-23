@@ -39,7 +39,9 @@ function Node(distanceA, distanceB, source, color) {
     this.twoDistances = null;
 }
 
-Node.prototype.coordinates = function() {
+Node.prototype.setTwoDistances = function(twoDistances) {
+    this.twoDistances = twoDistances;
+
     // it is an error if the distances sum to less than the direct origin distances
     if (this.distanceA + this.distanceB < this.twoDistances.originDistances) {
         console.error("Distances are impossibly small.", this.distanceA, this.distanceB);
@@ -51,7 +53,9 @@ Node.prototype.coordinates = function() {
         console.error("Distances are impossibly far apart.", this.distanceA, this.distanceB);
         throw new Error("Distances are impossibly far apart.", this);
     }
+}
 
+Node.prototype.coordinates = function() {
     if (typeof this._coordinates === 'undefined') {
         var bottomLeftAngle = triangle.angleFromSides(
             this.distanceB, this.distanceA, this.twoDistances.originDistances);
@@ -87,7 +91,7 @@ function TwoDistances(originDistances, nodes) {
     }
 
     for (var i = 0; i < this.nodes.length; i++) {
-        this.nodes[i].twoDistances = this;
+        this.nodes[i].setTwoDistances(this);
     }
 
     this.width = (2.0 - originDistances);
