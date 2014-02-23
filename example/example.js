@@ -6,10 +6,12 @@ require: TwoDistances .exists;
     var nodes = {};
 
     var graph = new TwoDistances(distance, [
-        nodes.a = new TwoDistances.Node(0.3, 0.4),
-        nodes.b = new TwoDistances.Node(0.4, 0.2, nodes.a),
-        nodes.c = new TwoDistances.Node(0.6, 0.3, nodes.a),
-        nodes.d = new TwoDistances.Node(0.7, 0.1, nodes.c)
+        nodes.a = new TwoDistances.Node(0.3, 0.8),
+        nodes.b = new TwoDistances.Node(0.4, 0.7, nodes.a),
+        nodes.c = new TwoDistances.Node(0.6, 0.5, nodes.a),
+        nodes.d = new TwoDistances.Node(0.8, 0.4, nodes.b),
+        nodes.e = new TwoDistances.Node(0.7, 0.3, nodes.c),
+        nodes.f = new TwoDistances.Node(0.8, 0.2, nodes.b),
     ]);
 
     document.body.appendChild(graph.canvas);

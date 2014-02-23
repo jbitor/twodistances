@@ -35,6 +35,12 @@ function Node(distanceA, distanceB, source, color) {
 }
 
 Node.prototype.coordinates = function(twoDistances) {
+    if (this.distanceA + this.distanceB < twoDistances.originDistances) {
+        throw new Error(
+            "(this.distanceA + this.distanceB) = " + (this.distanceA + this.distanceB) +
+            ", < twoDistances.originDistances = " + twoDistances.originDistances);
+    }
+
     if (typeof this._coordinates === 'undefined') {
         this._coordinates = new Coordinates(
             // TODO: everything interesting
@@ -93,7 +99,7 @@ TwoDistances.prototype.draw = function() {
         this.graphics.lineWidth = this.scale / 128;
 
         if (node.source) {
-            var sourceCoordinates = node.source.coordinates();
+            var sourceCoordinates = node.source.coordinates(this);
 
             this.graphics.beginPath();
             this.graphics.moveTo(
