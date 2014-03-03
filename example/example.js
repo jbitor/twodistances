@@ -18,7 +18,7 @@ require: TwoDistances .exists;
         nodes.j = new TwoDistances.Node(0.07, 0.07, nodes.g),
     ]);
 
-    var wrapper = document.createElement("div");
+    var wrapper = document.createElement('div');
     wrapper.appendChild(graph.canvas);
     document.body.appendChild(wrapper);
 }());
@@ -34,7 +34,7 @@ require: TwoDistances .exists;
         nodes.f = new TwoDistances.Node(0.81, 0.2, nodes.b),
     ]);
 
-    var wrapper = document.createElement("div");
+    var wrapper = document.createElement('div');
     wrapper.appendChild(graph.canvas);
     document.body.appendChild(wrapper);
 }());

@@ -79,10 +79,10 @@ function TwoDistances(originDistances, nodes) {
     this.originDistances = originDistances;
 
     this.originA = new Node(0.0, originDistances, null, 'rgba(255, 0, 0, 0.75)');
-    this.originA._coordinates = new Coordinates(1.0 - originDistances, 0);
+    this.originA._coordinates = new Coordinates(0.0, 0);
 
     this.originB = new Node(originDistances, 0.0, null, 'rgba(0, 0, 255, 0.75)')
-    this.originB._coordinates = new Coordinates(1.0, 0);
+    this.originB._coordinates = new Coordinates(originDistances, 0);
 
     this.nodes = [this.originA, this.originB];
 
@@ -94,89 +94,103 @@ function TwoDistances(originDistances, nodes) {
         this.nodes[i].setTwoDistances(this);
     }
 
-    this.width = (2.0 - originDistances);
-    this.height = Math.pow(1 - Math.pow(originDistances / 2, 2), 1/2);
+    // The interior space filled by the graphic.
+    this._xOffset = 0.5 * (1.0 - this.originDistances);
+    this._yOffset = 0;
+
+    this.size = this._defaultSize;
+    this.padding = this._defaultPadding;
+
+    this.scale = this.size - 2 * this.padding;
 
     this.canvas = document.createElement('canvas');
-    this.canvas.width = this.scale * (this.width + 2.0 * this.padding);
-    this.canvas.height = this.scale * (this.height + 2.0 * this.padding);
+    this.canvas.width = this.canvas.height = this.size;
 
     this.graphics = this.canvas.getContext('2d');
 
     this.draw();
 }
+TwoDistances.prototype._defaultSize = 256;
+TwoDistances.prototype._defaultPadding = 16;
 
-TwoDistances.prototype.scale = 256;
-TwoDistances.prototype.padding = 1/16;
-TwoDistances.prototype.scaleX = function(x) {
-    return this.scale * (this.padding + x);
-};
-TwoDistances.prototype.scaleY = function(y) {
-    return this.scale * (this.padding + this.height - y)
+// Transform internal coordinates (relative to .originA)
+// into a canvas coordinates.
+TwoDistances.prototype.transformX = function(x) {
+    return this.padding + (this._xOffset + x) * this.scale;
+};  
+TwoDistances.prototype.transformY = function(y) {
+    return this.size - this.padding - (y + this._yOffset) * this.scale;
 };
 
 TwoDistances.prototype.draw = function() {
     this.graphics.clearRect(0, 0, this.width, this.height);
 
+    for (var pass = 1; pass <= 2; pass++)
     for (var i = 0; i < this.nodes.length; i++) {
         var node = this.nodes[i];
         var coordinates = node.coordinates();
 
         this.graphics.strokeStyle = node.color || 'rgba(128, 128, 128, 1.0)';
-        this.graphics.fillStyle = this.graphics.strokeStyle;
-        this.graphics.lineWidth = this.scale / 64;
+        this.graphics.fillStyle = node.color || 'rgba(0, 0, 0, 1.0)';
+        this.graphics.lineWidth = this.scale / 128;
+
+        // Drag the nodes after drawing the lines and borders.
+        if (pass === 2) {
+            this.graphics.beginPath();
+            this.graphics.arc(
+                this.transformX(coordinates.x),
+                this.transformY(coordinates.y),
+                this.scale / 32,
+                0.0,
+                2.0 * Math.PI,
+                true);
+
+            this.graphics.fill();
+            this.graphics.stroke();
+            this.graphics.closePath();
+            continue;
+        }
 
         if (node.source) {
             var sourceCoordinates = node.source.coordinates();
 
             this.graphics.beginPath();
             this.graphics.moveTo(
-                this.scaleX(coordinates.x),
-                this.scaleY(coordinates.y));
+                this.transformX(coordinates.x),
+                this.transformY(coordinates.y));
             this.graphics.lineTo(
-                this.scaleX(sourceCoordinates.x),
-                this.scaleY(sourceCoordinates.y));
+                this.transformX(sourceCoordinates.x),
+                this.transformY(sourceCoordinates.y));
             this.graphics.stroke();
             this.graphics.closePath();
         }
 
-        this.graphics.beginPath();
-        this.graphics.arc(
-            this.scaleX(coordinates.x),
-            this.scaleY(coordinates.y),
-            this.scale / 32,
-            0.0,
-            2.0 * Math.PI,
-            true);
-
-        this.graphics.fill();
-        this.graphics.stroke();
-        this.graphics.closePath();
-
         // XXX(JB): for testing, draw lines to origins
-        this.graphics.beginPath();
-        this.graphics.lineWidth = 1;
-        this.graphics.strokeStyle = this.originA.color;
-        this.graphics.moveTo(
-            this.scaleX(coordinates.x),
-            this.scaleY(coordinates.y));
-        this.graphics.lineTo(
-            this.scaleX(this.originA.coordinates().x),
-            this.scaleY(this.originA.coordinates().y));
-        this.graphics.stroke();
-        this.graphics.closePath();
+        if (node !== this.originA && node !== this.originB) {
+            this.graphics.beginPath();
+            this.graphics.lineWidth = 0.25;
+            this.graphics.strokeStyle = this.originA.color;
+            this.graphics.moveTo(
+                this.transformX(coordinates.x),
+                this.transformY(coordinates.y));
+            this.graphics.lineTo(
+                this.transformX(this.originA.coordinates().x),
+                this.transformY(this.originA.coordinates().y));
+            this.graphics.stroke();
+            this.graphics.closePath();
 
-        this.graphics.beginPath();
-        this.graphics.lineWidth = 1;
-        this.graphics.strokeStyle = this.originB.color;
-        this.graphics.moveTo(
-            this.scaleX(coordinates.x),
-            this.scaleY(coordinates.y));
-        this.graphics.lineTo(
-            this.scaleX(this.originB.coordinates().x),
-            this.scaleY(this.originB.coordinates().y));
-        this.graphics.stroke();
-        this.graphics.closePath();
+            this.graphics.beginPath();
+            this.graphics.lineWidth = 0.25;
+            this.graphics.strokeStyle = this.originB.color;
+            this.graphics.moveTo(
+                this.transformX(coordinates.x),
+                this.transformY(coordinates.y));
+            this.graphics.lineTo(
+                this.transformX(this.originB.coordinates().x),
+                this.transformY(this.originB.coordinates().y));
+            this.graphics.stroke();
+            this.graphics.closePath();
+        }
     }
 };
 
